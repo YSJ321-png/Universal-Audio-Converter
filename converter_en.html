@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Universal Audio Converter</title>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/libflacjs@5.0.0/dist/libflac.min.js"></script>
+    <style>
+        /* 样式与中文版完全一致，可直接复用 */
+        :root { --bg:#0a0a14; --surface:#13132b; --surface2:#1e1e3a; --surface3:#2a2a4a; --primary:#8b5cf6; --accent:#00d4aa; --text:#f0f0ff; --text2:#c0c0e0; --text3:#8888aa; --border:#33335a; --radius:18px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); font-family:'Segoe UI','PingFang SC',sans-serif; color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .container { width:100%; max-width:1100px; background:var(--surface); border-radius:28px; padding:30px 28px; box-shadow:0 20px 50px rgba(0,0,0,0.6); border:1px solid var(--border); position:relative; }
+        .header { text-align:center; margin-bottom:20px; }
+        .header h1 { font-size:2em; font-weight:800; background: linear-gradient(135deg, #8b5cf6, #a78bfa, #00d4aa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .subtitle { color:var(--text3); }
+        .top-left-btn { position:absolute; top:20px; left:20px; background:var(--primary); color:#fff; border:none; padding:8px 14px; border-radius:20px; font-weight:700; cursor:pointer; font-size:0.85em; transition:0.2s; text-decoration:none; }
+        .top-left-btn:hover { background:#a78bfa; }
+        .top-btns { position:absolute; top:20px; right:20px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+        .top-btn { background:var(--accent); color:#000; border:none; padding:6px 10px; border-radius:20px; font-weight:700; cursor:pointer; font-size:0.7em; transition:0.2s; text-decoration:none; display:inline-block; line-height:1.2; }
+        .top-btn:hover { background:#00e6b0; }
+        .top-btn.feedback { background:var(--primary); color:#fff; }
+        .top-btn.feedback:hover { background:#a78bfa; }
+        .lang-btn { background:var(--surface2); color:var(--text2); border:1px solid var(--border); padding:6px 10px; border-radius:20px; font-weight:700; cursor:pointer; font-size:0.7em; transition:0.2s; text-decoration:none; display:inline-block; }
+        .lang-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .upload-zone { border:2px dashed var(--border); border-radius:var(--radius); padding:30px; text-align:center; cursor:pointer; background:var(--surface2); margin-bottom:20px; }
+        .upload-zone:hover { border-color:var(--primary); }
+        .upload-zone input[type="file"] { display:none; }
+        .info-card { background:var(--surface2); border-radius:var(--radius); padding:16px; margin-bottom:20px; border:1px solid var(--border); display:none; }
+        .info-card.show { display:block; }
+        .info-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(100px,1fr)); gap:8px; }
+        .info-item { background:var(--surface3); border-radius:8px; padding:10px; text-align:center; }
+        .info-label { font-size:0.65em; color:var(--text3); }
+        .info-value { font-weight:700; }
+        .section-title { font-weight:700; font-size:0.85em; text-transform:uppercase; color:var(--text2); margin-bottom:10px; margin-top:14px; }
+        .format-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+        .format-btn { flex:1; min-width:70px; padding:8px 6px; border:2px solid var(--border); border-radius:10px; background:var(--surface2); color:var(--text2); cursor:pointer; font-weight:600; font-size:0.8em; text-align:center; }
+        .format-btn.active { border-color:var(--primary); background:rgba(139,92,246,0.2); color:#fff; }
+        .badge { font-size:0.6em; padding:2px 6px; border-radius:10px; margin-left:4px; }
+        .badge-common { background:#3b82f6; color:#fff; }
+        .badge-lossless { background:var(--accent); color:#000; }
+        .badge-lossy { background:#fbbf24; color:#000; }
+        .badge-pro { background:#ef4444; color:#fff; }
+        .selector-row { display:flex; gap:20px; margin:10px 0; flex-wrap:wrap; }
+        .engine-selector, .algorithm-selector { display:flex; align-items:center; gap:10px; }
+        .engine-selector select, .algorithm-selector select { background:var(--surface2); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; font-weight:600; }
+        .bitrate-box { display:none; margin-top:10px; }
+        .bitrate-box.show { display:block; }
+        .bitrate-row { display:flex; gap:6px; flex-wrap:wrap; }
+        .bitrate-btn { padding:7px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); cursor:pointer; font-size:0.8em; }
+        .bitrate-btn.active { border-color:var(--accent); background:rgba(0,212,170,0.15); color:var(--accent); }
+        .action-btn { width:100%; padding:16px; border:none; border-radius:12px; font-weight:700; font-size:1.1em; cursor:pointer; background: linear-gradient(135deg, var(--primary), #6d28d9); color:#fff; }
+        .action-btn:disabled { opacity:0.4; }
+        .download-btn { background:var(--accent); color:#000; margin-top:12px; display:none; }
+        .download-btn.show { display:block; }
+        .progress-wrap { display:none; margin-top:12px; }
+        .progress-wrap.show { display:block; }
+        .progress-bar { height:8px; background:var(--surface3); border-radius:10px; overflow:hidden; }
+        .progress-inner { height:100%; width:0%; background:linear-gradient(90deg, var(--primary), var(--accent)); }
+        .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--surface3); color:var(--text); padding:12px 24px; border-radius:30px; font-weight:600; z-index:999; border:1px solid var(--border); animation:toastIn 0.3s, toastOut 0.3s 5s forwards; }
+        .toast.error { border-color:#ff5e5e; color:#ff5e5e; }
+        @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-20px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+        @keyframes toastOut { from{opacity:1;} to{opacity:0;transform:translateX(-50%) translateY(-20px);} }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:1000; }
+        .modal-overlay.show { display:flex; }
+        .modal-box { background:var(--surface); border-radius:16px; padding:24px; width:90%; max-width:400px; border:1px solid var(--border); }
+        .modal-box h3 { margin-bottom:12px; }
+        .modal-box textarea { width:100%; height:120px; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px; resize:vertical; font-family:inherit; }
+        .modal-box .btn-row { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <button class="top-left-btn" onclick="window.open('guide_en.html','_blank')">📖 Audio Guide</button>
+
+    <div class="top-btns">
+        <a href="https://www.douyin.com/user/self" target="_blank" class="top-btn">🎵 Developer</a>
+        <button class="top-btn feedback" id="feedbackBtn">💬 Feedback</button>
+        <button class="top-btn" id="historyBtn">📬 Replies</button>
+        <button class="top-btn" id="downloadBatBtn">📥 One-Click Start</button>
+        <a href="converter.html" class="lang-btn">中文</a>
+    </div>
+    <div class="header">
+        <h1>🎵 Universal Audio Converter</h1>
+        <div class="subtitle">NCM Decryption · Dynamic Range · All Formats · Algorithm Selection</div>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+        <span style="font-size:48px">📂</span>
+        <div style="font-weight:600;">Click / Drag / Paste Audio File</div>
+        <input type="file" id="fileInput" accept="audio/*,.ncm">
+    </div>
+
+    <div class="info-card" id="infoCard">
+        <div class="file-name" id="fileNameDisp"></div>
+        <div class="info-grid">
+            <div class="info-item"><div class="info-label">⏱ Duration</div><div class="info-value" id="durVal">-</div></div>
+            <div class="info-item"><div class="info-label">📊 Sample Rate</div><div class="info-value" id="srVal">-</div></div>
+            <div class="info-item"><div class="info-label">🔊 Channels</div><div class="info-value" id="chVal">-</div></div>
+            <div class="info-item"><div class="info-label">📦 Size</div><div class="info-value" id="sizeVal">-</div></div>
+            <div class="info-item"><div class="info-label">🎚 Bit Depth</div><div class="info-value" id="bitsVal">-</div></div>
+            <div class="info-item"><div class="info-label">📈 Dynamic Range</div><div class="info-value" id="drVal">-</div></div>
+        </div>
+    </div>
+
+    <div class="selector-row">
+        <div class="engine-selector">
+            <label for="engineSelect" style="color:var(--text2); font-weight:700;">⚙️ Engine:</label>
+            <select id="engineSelect">
+                <option value="ffmpeg">FFmpeg (Default)</option>
+                <option value="independent">Independent (LAME/FLAC/OGG/Opus/AAC)</option>
+            </select>
+        </div>
+        <div class="algorithm-selector">
+            <label for="algorithmSelect" style="color:var(--text2); font-weight:700;">🔓 NCM Algorithm:</label>
+            <select id="algorithmSelect">
+                <option value="auto">Auto (by extension)</option>
+                <option value="builtin">Built-in</option>
+                <option value="ncmdump">ncmdump (NCM only)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="section-title">✨ Common</div>
+    <div class="format-row">
+        <button class="format-btn active" data-fmt="mp3">MP3 <span class="badge badge-common">Common</span></button>
+        <button class="format-btn" data-fmt="aac">AAC <span class="badge badge-common">Apple</span></button>
+        <button class="format-btn" data-fmt="wav">WAV <span class="badge badge-common">Lossless</span></button>
+        <button class="format-btn" data-fmt="flac">FLAC <span class="badge badge-common">Lossless</span></button>
+        <button class="format-btn" data-fmt="ogg">OGG <span class="badge badge-common">Open Source</span></button>
+    </div>
+    <div class="section-title">💎 Lossless</div>
+    <div class="format-row">
+        <button class="format-btn" data-fmt="alac">ALAC <span class="badge badge-lossless">Apple</span></button>
+        <button class="format-btn" data-fmt="aiff">AIFF <span class="badge badge-lossless">Apple</span></button>
+        <button class="format-btn" data-fmt="ape">APE <span class="badge badge-lossless">High Compression</span></button>
+        <button class="format-btn" data-fmt="wv">WavPack <span class="badge badge-lossless">Hybrid</span></button>
+        <button class="format-btn" data-fmt="tta">TTA <span class="badge badge-lossless">Lossless</span></button>
+        <button class="format-btn" data-fmt="pcm">PCM <span class="badge badge-lossless">Raw</span></button>
+    </div>
+    <div class="section-title">🎧 Lossy / Voice</div>
+    <div class="format-row">
+        <button class="format-btn" data-fmt="wma">WMA <span class="badge badge-lossy">Microsoft</span></button>
+        <button class="format-btn" data-fmt="opus">Opus <span class="badge badge-lossy">Efficient</span></button>
+        <button class="format-btn" data-fmt="amr">AMR <span class="badge badge-lossy">Voice</span></button>
+        <button class="format-btn" data-fmt="spx">Speex <span class="badge badge-lossy">Voice</span></button>
+        <button class="format-btn" data-fmt="ra">RealAudio <span class="badge badge-lossy">Streaming</span></button>
+    </div>
+    <div class="section-title">🎬 Professional</div>
+    <div class="format-row">
+        <button class="format-btn" data-fmt="ac3">AC-3 <span class="badge badge-pro">Dolby</span></button>
+        <button class="format-btn" data-fmt="dts">DTS <span class="badge badge-pro">Surround</span></button>
+        <button class="format-btn" data-fmt="au">AU <span class="badge badge-pro">Sun</span></button>
+        <button class="format-btn" data-fmt="m4a">M4A <span class="badge badge-pro">Container</span></button>
+        <button class="format-btn" data-fmt="caf">CAF <span class="badge badge-pro">Apple</span></button>
+    </div>
+
+    <div class="bitrate-box" id="bitrateBox">
+        <div class="section-title">🎯 MP3 Bitrate (kbps)</div>
+        <div class="bitrate-row" id="bitrateRow">
+            <button class="bitrate-btn" data-br="128">128</button>
+            <button class="bitrate-btn active" data-br="192">192</button>
+            <button class="bitrate-btn" data-br="256">256</button>
+            <button class="bitrate-btn" data-br="320">320</button>
+        </div>
+    </div>
+    <button class="action-btn" id="convertBtn" disabled>⚡ Start Conversion</button>
+    <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-inner" id="progressBar"></div></div>
+        <div id="progressText" style="text-align:center;font-size:0.8em;color:var(--text3);margin-top:6px;"></div>
+    </div>
+    <button class="action-btn download-btn" id="downloadBtn">💾 Download</button>
+</div>
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <h3>💬 Send Feedback</h3>
+        <textarea id="feedbackText" placeholder="Describe your issue or suggestion..."></textarea>
+        <div class="btn-row">
+            <button class="top-btn" id="cancelFeedback">Cancel</button>
+            <button class="top-btn" id="sendFeedback">Send</button>
+        </div>
+    </div>
+</div>
+<script>
+    // JavaScript 逻辑与中文版完全相同，只是toast提示文字改为英文
+    const convertBtn=document.getElementById('convertBtn'),progressWrap=document.getElementById('progressWrap'),progressBar=document.getElementById('progressBar'),progressText=document.getElementById('progressText'),downloadBtn=document.getElementById('downloadBtn'),bitrateBox=document.getElementById('bitrateBox'),uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),infoCard=document.getElementById('infoCard');
+    let origFileName='',selectedFormat='mp3',selectedBitrate=192,convertedBlob=null,convertedName='',isConverting=false,rawFile=null;
+    const toast=(m,t='')=>{
+        const o=document.querySelector('.toast');if(o)o.remove();
+        const d=document.createElement('div');
+        d.className='toast'+(t?' '+t:'');
+        d.textContent=m;
+        document.body.appendChild(d);
+        const duration = t==='error' ? 5000 : 2500;
+        d.style.animation = `toastIn 0.3s, toastOut 0.3s ${duration/1000}s forwards`;
+        d.addEventListener('animationend',()=>d.remove());
+    };
+    const updateProgress=(p,m)=>{progressBar.style.width=p+'%';if(m)progressText.textContent=m;};
+    function fmtSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';}
+    function fmtDuration(s){if(!s||s<=0)return'-';const m=Math.floor(s/60),sec=Math.floor(s%60);return m?`${m}min ${sec.toString().padStart(2,'0')}s`:`${sec.toFixed(1)}s`;}
+    async function fetchAudioInfo(file){
+        const fd=new FormData();fd.append('file',file,file.name);
+        const r=await fetch('/info',{method:'POST',body:fd});
+        const data=await r.json();
+        if(!r.ok) throw new Error(data.error||'Failed to get info');
+        return data;
+    }
+    async function handleFile(f){
+        if(!f)return;
+        rawFile=f; origFileName=f.name;
+        document.getElementById('fileNameDisp').textContent=origFileName;
+        document.getElementById('sizeVal').textContent=fmtSize(f.size);
+        infoCard.classList.add('show');
+        convertBtn.disabled=false;
+        downloadBtn.classList.remove('show');
+        try{
+            const info=await fetchAudioInfo(f);
+            document.getElementById('durVal').textContent=fmtDuration(info.duration);
+            document.getElementById('srVal').textContent=(info.sample_rate/1000).toFixed(1)+' kHz';
+            document.getElementById('chVal').textContent=info.channels===1?'Mono':info.channels===2?'Stereo':info.channels+'ch';
+            document.getElementById('bitsVal').textContent=info.bits_per_sample?info.bits_per_sample+'-bit':'16-bit';
+            document.getElementById('drVal').textContent=info.dynamic_range!==null?info.dynamic_range+' dB':'N/A';
+        }catch(e){
+            document.getElementById('durVal').textContent='Failed';
+            document.getElementById('srVal').textContent='-';
+            document.getElementById('chVal').textContent='-';
+            document.getElementById('bitsVal').textContent='-';
+            document.getElementById('drVal').textContent='-';
+            toast('⚠️ Failed to get audio info: '+e.message,'error');
+        }
+    }
+    async function convertRaw(file,fmt,engine,algorithm){
+        const fd=new FormData();fd.append('file',file,file.name);fd.append('format',fmt);fd.append('engine',engine);fd.append('algorithm',algorithm);
+        updateProgress(30,'Converting...');
+        const r=await fetch('/convert',{method:'POST',body:fd});
+        if(!r.ok){const err=await r.json();throw new Error(err.error||'Conversion failed');}
+        return await r.blob();
+    }
+    async function convert(){
+        if(!rawFile||isConverting)return;
+        const engine = document.getElementById('engineSelect').value;
+        const algorithm = document.getElementById('algorithmSelect').value;
+        if(algorithm==='ncmdump' && !rawFile.name.toLowerCase().endsWith('.ncm')){
+            toast('⚠️ This model can only be used with .ncm files','error');
+            return;
+        }
+        isConverting=true;convertBtn.disabled=true;downloadBtn.classList.remove('show');
+        progressWrap.classList.add('show');updateProgress(0,'Preparing...');
+        const base=origFileName.replace(/\.[^.]+$/,'');
+        try{
+            const outBlob=await convertRaw(rawFile,selectedFormat,engine,algorithm);
+            const ext=selectedFormat==='aac'?'m4a':selectedFormat;
+            convertedBlob=outBlob;convertedName=base+'_converted.'+ext;
+            downloadBtn.classList.add('show');updateProgress(100,'✅ Completed');
+        }catch(e){toast('❌ '+e.message,'error');}
+        finally{isConverting=false;convertBtn.disabled=!rawFile;}
+    }
+    function download(){if(!convertedBlob)return;const u=URL.createObjectURL(convertedBlob);const a=document.createElement('a');a.href=u;a.download=convertedName;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1000);}
+    document.getElementById('downloadBatBtn').addEventListener('click',()=>{
+        const batContent = `@echo off\necho Starting server...\nstart "AudioServer" python server.py\ntimeout /t 2 /nobreak >nul\necho Opening converter...\nstart http://localhost:8000/converter_en.html\nexit`;
+        const blob=new Blob([batContent],{type:'application/bat'});
+        const url=URL.createObjectURL(blob);const a=document.createElement('a');
+        a.href=url;a.download='Start_Server.bat';document.body.appendChild(a);a.click();
+        document.body.removeChild(a);URL.revokeObjectURL(url);
+        toast('📥 Downloaded! Put it in the conerter folder and run.','success');
+    });
+    document.getElementById('historyBtn').addEventListener('click',()=>{window.open('history_en.html','_blank');});
+    const modal=document.getElementById('feedbackModal'),feedbackText=document.getElementById('feedbackText');
+    document.getElementById('feedbackBtn').addEventListener('click',()=>{modal.classList.add('show');feedbackText.focus();});
+    document.getElementById('cancelFeedback').addEventListener('click',()=>{modal.classList.remove('show');feedbackText.value='';});
+    document.getElementById('sendFeedback').addEventListener('click',async()=>{
+        const text=feedbackText.value.trim();
+        if(!text){toast('Please enter feedback content','error');return;}
+        const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:text})});
+        if(r.ok){toast('✅ Feedback sent','success');modal.classList.remove('show');}else toast('❌ Failed to send','error');
+    });
+    uploadZone.addEventListener('click',()=>fileInput.click());
+    fileInput.addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);fileInput.value='';});
+    uploadZone.addEventListener('dragover',e=>e.preventDefault());
+    uploadZone.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+    document.addEventListener('paste',e=>{if(isConverting)return;const items=e.clipboardData?.items;if(!items)return;for(const item of items)if(item.kind==='file'){handleFile(item.getAsFile());break;}});
+    document.querySelectorAll('.format-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.format-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedFormat=b.dataset.fmt;bitrateBox.classList.toggle('show',selectedFormat==='mp3');}));
+    document.getElementById('bitrateRow').addEventListener('click',e=>{const b=e.target.closest('.bitrate-btn');if(!b)return;document.querySelectorAll('.bitrate-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedBitrate=parseInt(b.dataset.br);});
+    convertBtn.addEventListener('click',convert);
+    downloadBtn.addEventListener('click',download);
+    if(selectedFormat==='mp3')bitrateBox.classList.add('show');
+</script>
+</body>
+</html>
