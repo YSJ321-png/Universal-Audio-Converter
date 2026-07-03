@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📖 如何获取音频文件 - Audio Acquisition Guide</title>
+    <style>
+        :root { --bg:#0a0a14; --surface:#13132b; --surface2:#1e1e3a; --text:#f0f0ff; --text2:#c0c0e0; --accent:#00d4aa; --primary:#8b5cf6; }
+        body { background:var(--bg); font-family:'Segoe UI','PingFang SC',sans-serif; color:var(--text); padding:40px; line-height:1.6; }
+        .container { max-width:800px; margin:0 auto; background:var(--surface); border-radius:20px; padding:30px; }
+        h1 { color:var(--accent); text-align:center; }
+        .method { background:var(--surface2); border-radius:12px; padding:20px; margin:20px 0; }
+        .method h2 { color:var(--primary); margin-bottom:10px; }
+        .method p { margin:8px 0; }
+        .en { font-style:italic; color:var(--text2); }
+        .zh { font-weight:bold; }
+        a { color:var(--accent); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📖 如何获取音频文件<br><small>How to Obtain Audio Files</small></h1>
+
+    <div class="method">
+        <h2>1. 网易云官方客户端格式转换 / NetEase Cloud Music Official Conversion</h2>
+        <p class="en">Right-click a song in the NetEase client → "Tools" → "Format Conversion" (if available).</p>
+        <p class="zh">在网易云客户端右键歌曲 → “工具” → “格式转换”（部分版本支持）。</p>
+    </div>
+
+    <div class="method">
+        <h2>2. 浏览器开发者工具 (F12) / Browser DevTools (F12)</h2>
+        <p class="en">Play the song in the web player, press F12 → Network → filter "Media" or sort by size, find the .m4a/.mp3 file, right-click "Open in new tab", then Save.</p>
+        <p class="zh">播放网页版歌曲，按F12→Network→筛选“Media”或按大小排序，找到.m4a/.mp3文件，右键“在新标签页打开”后保存。</p>
+    </div>
+
+    <div class="method">
+        <h2>3. 录音法 (Audacity等) / Recording via Audacity</h2>
+        <p class="en">Use Audacity (free) or other recording software to capture system audio while playing the song, then export as WAV/MP3.</p>
+        <p class="zh">使用Audacity（免费）或其他录音软件，播放歌曲时录制系统声音，导出为WAV/MP3。</p>
+    </div>
+
+    <div class="method">
+        <h2>4. 第三方下载工具 / Third-party Downloaders</h2>
+        <p class="en">Tools like Listen1, YesPlayMusic, or MusicTools can aggregate and download songs from multiple platforms.</p>
+        <p class="zh">Listen1、YesPlayMusic、MusicTools等第三方工具可以聚合下载多个平台的歌曲。</p>
+    </div>
+
+    <p style="text-align:center; margin-top:30px;">💡 获得音频文件后，拖入转换器即可转成任意格式！<br>After obtaining the audio file, drag it into the converter to convert to any format!</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📬 我的反馈历史</title>
+    <style>
+        :root { --bg:#0a0a14; --surface:#13132b; --surface2:#1e1e3a; --text:#f0f0ff; --text2:#c0c0e0; --accent:#00d4aa; --primary:#8b5cf6; --danger:#ff5e5e; }
+        body { background:var(--bg); font-family:'Segoe UI','PingFang SC',sans-serif; color:var(--text); padding:40px; }
+        .container { max-width:700px; margin:0 auto; background:var(--surface); border-radius:20px; padding:30px; }
+        h1 { color:var(--accent); text-align:center; }
+        .feedback-card { background:var(--surface2); border-radius:12px; padding:20px; margin:16px 0; border-left:4px solid var(--primary); }
+        .time { font-size:0.8em; color:var(--text2); margin-bottom:8px; }
+        .question { background:rgba(139,92,246,0.1); border-radius:8px; padding:12px; margin:8px 0; }
+        .reply { background:rgba(0,212,170,0.1); border-radius:8px; padding:12px; margin:8px 0; }
+        .label { font-weight:700; color:var(--accent); margin-right:8px; }
+        .closed { color:var(--danger); font-weight:bold; margin-top:8px; }
+        .empty { text-align:center; color:var(--text2); padding:40px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📬 我的反馈历史</h1>
+    <div id="historyList"></div>
+</div>
+<script>
+    async function loadHistory() {
+        const resp = await fetch('/get_feedback');
+        const data = await resp.json();
+        const list = document.getElementById('historyList');
+        // 显示所有已回复的反馈（包括已结束的）
+        const replied = data.filter(item => item.reply);
+        if (replied.length === 0) {
+            list.innerHTML = '<p class="empty">暂无回复</p>';
+            return;
+        }
+        replied.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'feedback-card';
+            card.innerHTML = `
+                <div class="time">🕒 ${item.time}</div>
+                <div class="question">
+                    <span class="label">❓ 我的问题</span>
+                    <div>${escapeHtml(item.feedback)}</div>
+                </div>
+                <div class="reply">
+                    <span class="label">💬 管理员回复</span>
+                    <div>${escapeHtml(item.reply)}</div>
+                </div>
+                ${item.closed ? '<div class="closed">🔒 客服已结束回答</div>' : ''}
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    loadHistory();
+</script>
+</body>
+</html>
